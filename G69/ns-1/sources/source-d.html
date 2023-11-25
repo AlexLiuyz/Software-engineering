@@ -1,0 +1,200 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <title>Coverage Report > Manager</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">org.example.models</a>
+</div>
+
+<h1>Coverage Summary for Class: Manager (org.example.models)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">Manager</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (10/10)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (44/44)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package org.example.models;
+&nbsp;
+&nbsp;import org.example.Errors.UnsupportedOperation;
+&nbsp;
+&nbsp;import java.io.BufferedWriter;
+&nbsp;import java.io.File;
+&nbsp;import java.io.FileWriter;
+&nbsp;import java.io.IOException;
+&nbsp;import java.lang.reflect.Field;
+&nbsp;import java.util.HashMap;
+&nbsp;import java.util.LinkedList;
+&nbsp;import java.util.List;
+&nbsp;
+<b class="fc">&nbsp;public abstract class Manager&lt;T extends Entity&gt; {</b>
+&nbsp;    protected HashMap&lt;String, T&gt; storage;
+&nbsp;    protected String name;
+&nbsp;    protected Class schema;
+&nbsp;    protected int count;
+&nbsp;
+&nbsp;    protected abstract String generateId();
+&nbsp;    public void create(T entity){
+<b class="fc">&nbsp;        entity.setId(this.generateId());</b>
+<b class="fc">&nbsp;        storage.put(entity.getId(), (T) entity.getCopy());</b>
+&nbsp;    }
+&nbsp;    public void update(T entity){
+<b class="fc">&nbsp;        T entityToBeUpdated = this.storage.get(entity.getId());</b>
+<b class="fc">&nbsp;        if(entityToBeUpdated == null){</b>
+&nbsp;            // Throw exception
+&nbsp;            return;
+&nbsp;        }
+<b class="fc">&nbsp;        this.storage.put(entity.getId(), (T) entity.getCopy());</b>
+&nbsp;    }
+&nbsp;    public void delete(String id){
+<b class="fc">&nbsp;        this.storage.remove(id);</b>
+&nbsp;    }
+&nbsp;    public List&lt;T&gt; getAll(){
+<b class="fc">&nbsp;        return this.storage.values().stream().toList();</b>
+&nbsp;    }
+&nbsp;    public T getById(String id){
+<b class="fc">&nbsp;        return this.storage.get(id);</b>
+&nbsp;    }
+&nbsp;    public List&lt;T&gt; findByAttribute(String attribute, Object target, Operator op) throws NoSuchFieldException, IllegalAccessException, UnsupportedOperation {
+<b class="fc">&nbsp;        LinkedList&lt;T&gt; results = new LinkedList();</b>
+<b class="fc">&nbsp;        Verifier verifier = VerifierCreator.createVerifier(op);</b>
+&nbsp;        try {
+<b class="fc">&nbsp;            Field field = this.schema.getDeclaredField(attribute);</b>
+<b class="fc">&nbsp;            field.setAccessible(true);</b>
+<b class="fc">&nbsp;            for (T note : this.storage.values()) {</b>
+<b class="fc">&nbsp;                Object value = field.get(note);</b>
+<b class="fc">&nbsp;                if (verifier.verify(value, target)) {</b>
+<b class="fc">&nbsp;                    results.add(note);</b>
+&nbsp;                }
+<b class="fc">&nbsp;            }</b>
+&nbsp;        }
+<b class="fc">&nbsp;        catch (NoSuchFieldException noSuchFieldException){</b>
+<b class="fc">&nbsp;            throw new NoSuchFieldException(noSuchFieldException.getMessage() + &quot; does not exist as an attribute&quot;);</b>
+<b class="fc">&nbsp;        }</b>
+<b class="fc">&nbsp;        return results;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public List&lt;T&gt; search(List&lt;Filter&gt; filters, Connector connector) throws NoSuchFieldException, IllegalAccessException, UnsupportedOperation {
+<b class="fc">&nbsp;        List&lt;T&gt; results = null;</b>
+<b class="fc">&nbsp;        Merger merger = MergerCreator.createMerger(connector);</b>
+<b class="fc">&nbsp;        for(Filter filter: filters){</b>
+<b class="fc">&nbsp;            List&lt;T&gt; searchResults = findByAttribute(filter.getAttribute(), filter.getTarget(), filter.getOperator());</b>
+<b class="fc">&nbsp;            if( results == null){</b>
+<b class="fc">&nbsp;                results = new LinkedList&lt;&gt;(searchResults);</b>
+&nbsp;            }
+&nbsp;            else{
+<b class="fc">&nbsp;                results = merger.merge(results, searchResults);</b>
+&nbsp;            }
+<b class="fc">&nbsp;        }</b>
+<b class="fc">&nbsp;        return results;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public boolean checkId(String id){
+<b class="fc">&nbsp;        if (storage.containsKey(id) == false){</b>
+<b class="fc">&nbsp;            return false;</b>
+&nbsp;        }
+<b class="fc">&nbsp;        return true;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public abstract void load() throws Exception;
+&nbsp;    public void save() throws IOException {
+<b class="fc">&nbsp;        final String FILENAME = this.name+&quot;.pim&quot;;</b>
+<b class="fc">&nbsp;        File file = new File(FILENAME);</b>
+<b class="fc">&nbsp;        if(!file.exists()){</b>
+<b class="fc">&nbsp;            file.createNewFile();</b>
+&nbsp;        }
+<b class="fc">&nbsp;        BufferedWriter writer = new BufferedWriter(new FileWriter(file));</b>
+<b class="fc">&nbsp;        writer.write(this.count + &quot;\n&quot;);</b>
+<b class="fc">&nbsp;        for(T entity: this.storage.values()){</b>
+<b class="fc">&nbsp;            writer.write(entity.toString() + &quot;\n&quot;);</b>
+<b class="fc">&nbsp;        }</b>
+<b class="fc">&nbsp;        writer.close();</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2023-11-25 22:37</div>
+</div>
+</body>
+</html>
